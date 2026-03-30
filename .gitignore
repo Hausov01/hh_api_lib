@@ -1,0 +1,30 @@
+# Файлы окружения и секреты
+.env
+*.env
+.env.local
+secrets.json
+
+# Кэш Python
+__pycache__/
+*.py[cod]
+*.pyc
+
+# Виртуальное окружение
+venv/
+.venv/
+env/
+
+# Логи и временные файлы
+*.log
+*.tmp
+data/
+
+# IDE-специфичные файлы
+.vscode/
+.idea/
+*.swp
+
+# Дистрибутивы и сборки
+dist/
+build/
+*.egg-info/
