@@ -130,7 +130,7 @@ def _get_all_vacancy_ids(session, search_config, hhconfig: HHConfig):
                 all_vacancy_ids.append(item)
     return all_vacancy_ids
 
-def _get_all_vacancy_details(session, all_vacancy_ids, search_config: SearchParams, hhconfig: HHConfig, show_progress: bool = False,):
+def _get_all_vacancy_details(session, all_vacancy_ids, search_config, hhconfig: HHConfig, show_progress: bool = False,):
     all_data = []
     iterator = all_vacancy_ids
     if show_progress:
