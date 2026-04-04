@@ -21,4 +21,4 @@
 ## Установка
 
 ```bash
-pip install hh-api-lib[progress]
+pip install git+https://github.com/Hausov01/hh_api_lib

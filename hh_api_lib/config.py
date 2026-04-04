@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Optional
 
 @dataclass
 class HHConfig:
@@ -7,20 +8,13 @@ class HHConfig:
     timeout: tuple = (3, 10)
 
 @dataclass
-class SearchParams_period:
-    period: int
+class SearchParams:
     area_id: str
     vacancy: str
     base_url: str
-    access_token: str
-    email: str
+    access_token: str | None = None
+    email: str | None = None
 
-@dataclass
-class SearchParams_dateTodate:
-    start_date: str
-    end_date: str
-    area_id: str
-    vacancy: str
-    base_url: str
-    access_token: str
-    email: str
+    period: Optional[int] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None

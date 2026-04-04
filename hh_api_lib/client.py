@@ -4,7 +4,8 @@ from dataclasses import dataclass
 from typing import Any, Dict
 import math
 import logging
-from .config import HHConfig, SearchParams_period, SearchParams_dateTodate
+from typing import Optional
+from .config import HHConfig, SearchParams
 from .exceptions import HHCaptchaRequired
 
 
@@ -22,31 +23,23 @@ class HHConfig:
     timeout: tuple = (3, 10)
 
 @dataclass
-class SearchParams_period:
-    period: int
+class SearchParams:
     area_id: str
     vacancy: str
     base_url: str
-    access_token: str
-    email: str
+    access_token: str | None = None
+    email: str | None = None
 
-@dataclass
-class SearchParams_dateTodate:
-    start_date: str
-    end_date: str
-    area_id: str
-    vacancy: str
-    base_url: str
-    access_token: str
-    email: str
-
+    period: Optional[int] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
 
 class HHCaptchaRequired(Exception):
     def __init__(self, captcha_url: str):
         self.captcha_url = captcha_url
         super().__init__(f"Captcha required. Solve here: {captcha_url}")
 
-def external_request(search_config, show_progress: bool = False):
+def external_request(search_config: SearchParams, show_progress: bool = False):
         count = 0
         results = []
         hhconfig = HHConfig()
@@ -71,27 +64,27 @@ def external_request(search_config, show_progress: bool = False):
 
 
 
-def _get_all_vacancy_ids(session, search_config, hhconfig: HHConfig):
+def _get_all_vacancy_ids(session, search_config: SearchParams, hhconfig: HHConfig):
 
     all_vacancy_ids=[]
     logger.info("Fetching vacancy pages info")
-    if search_config is SearchParams_dateTodate:
-        params = {
-            'text': search_config.vacancy,
-            'date_from': search_config.start_date,
-            'date_to': search_config.end_date,
-            'area': search_config.area_id,
-            'per_page': hhconfig.per_page,
-            'page': 0
-        }
-    if search_config is SearchParams_period:
-        params = {
-            'text': search_config.vacancy,
-            'period': search_config.period,
-            'area': search_config.area_id,
-            'per_page': hhconfig.per_page,
-            'page': 0
-        }
+    params = {
+        'text': search_config.vacancy,
+        'area': search_config.area_id,
+        'per_page': hhconfig.per_page,
+        'page': 0
+    }
+
+    if search_config.period is not None:
+        params['period'] = search_config.period
+
+    elif search_config.start_date and search_config.end_date:
+        params['date_from'] = search_config.start_date
+        params['date_to'] = search_config.end_date
+
+    else:
+        raise ValueError("Provide either period or start_date + end_date")
+
     data = _request(session, search_config.base_url, params, hhconfig.timeout)
     total_found = data.get('found', 0)
     pages_available = data.get('pages', 0)
@@ -102,23 +95,23 @@ def _get_all_vacancy_ids(session, search_config, hhconfig: HHConfig):
     seen = set()
     for i in range(pages_available):
         logger.info("page %s", i)
-        if search_config is SearchParams_dateTodate:
-            params = {
-                'text': search_config.vacancy,
-                'date_from': search_config.start_date,
-                'date_to': search_config.end_date,
-                'area': search_config.area_id,
-                'per_page': hhconfig.per_page,
-                'page': 0
-            }
-        if search_config is SearchParams_period:
-            params = {
-                'text': search_config.vacancy,
-                'period': search_config.period,
-                'area': search_config.area_id,
-                'per_page': hhconfig.per_page,
-                'page': 0
-            }
+        params = {
+            'text': search_config.vacancy,
+            'area': search_config.area_id,
+            'per_page': hhconfig.per_page,
+            'page': 0
+        }
+
+        if search_config.period is not None:
+            params['period'] = search_config.period
+
+        elif search_config.start_date and search_config.end_date:
+            params['date_from'] = search_config.start_date
+            params['date_to'] = search_config.end_date
+
+        else:
+            raise ValueError("Provide either period or start_date + end_date")
+
         data = _request(session, search_config.base_url, params, hhconfig.timeout)
         vacancy_ids = [item['id'] for item in data.get('items', []) if 'id' in item]
         logger.debug("Fetched IDs: %s", vacancy_ids)
@@ -130,7 +123,7 @@ def _get_all_vacancy_ids(session, search_config, hhconfig: HHConfig):
                 all_vacancy_ids.append(item)
     return all_vacancy_ids
 
-def _get_all_vacancy_details(session, all_vacancy_ids, search_config, hhconfig: HHConfig, show_progress: bool = False,):
+def _get_all_vacancy_details(session, all_vacancy_ids, search_config: SearchParams, hhconfig: HHConfig, show_progress: bool = False,):
     all_data = []
     iterator = all_vacancy_ids
     if show_progress:
