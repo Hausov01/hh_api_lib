@@ -22,7 +22,7 @@ class HHConfig:
     timeout: tuple = (3, 10)
 
 @dataclass
-class SearchParams:
+class SearchParams_period:
     period: int
     area_id: str
     vacancy: str
@@ -30,47 +30,68 @@ class SearchParams:
     access_token: str
     email: str
 
+@dataclass
+class SearchParams_dateTodate:
+    start_date: str
+    end_date: str
+    area_id: str
+    vacancy: str
+    base_url: str
+    access_token: str
+    email: str
+
+
 class HHCaptchaRequired(Exception):
     def __init__(self, captcha_url: str):
         self.captcha_url = captcha_url
         super().__init__(f"Captcha required. Solve here: {captcha_url}")
 
-def external_request(search_config: SearchParams, show_progress: bool = False):
-    count = 0
-    results = []
-    hhconfig = HHConfig()
-    with requests.Session() as session:
-        headers = {
-            'User-Agent': f'HH-API-Client/1.0 ({search_config.email})' if search_config.email else 'HH-API-Client/1.0'
-        }
-        if search_config.access_token:
-            headers['Authorization'] = f'Bearer {search_config.access_token}'
-        if not search_config.access_token:
-            logger.info("WARNING: No access token provided")
-        session.headers.update(headers)
+def external_request(search_config, show_progress: bool = False):
+        count = 0
+        results = []
+        hhconfig = HHConfig()
+        with requests.Session() as session:
+            headers = {
+                'User-Agent': f'HH-API-Client/1.0 ({search_config.email})' if search_config.email else 'HH-API-Client/1.0'
+            }
+            if search_config.access_token:
+                headers['Authorization'] = f'Bearer {search_config.access_token}'
+            if not search_config.access_token:
+                logger.info("WARNING: No access token provided")
+            session.headers.update(headers)
 
-        logger.info("--- Этап 1: Сбор ID вакансий ---")
-        logger.info("Поиск по вакансии: %s", search_config.vacancy)
-        all_vacancy_ids = _get_all_vacancy_ids(session, search_config, hhconfig)
-        logger.info('-'*30)
-        #logger.info(all_vacancy_ids)
-        all_data= _get_all_vacancy_details(session, all_vacancy_ids, search_config, hhconfig, show_progress)
-        #logger.info(all_data)
-        return all_data
+            logger.info("--- Этап 1: Сбор ID вакансий ---")
+            logger.info("Поиск по вакансии: %s", search_config.vacancy)
+            all_vacancy_ids = _get_all_vacancy_ids(session, search_config, hhconfig)
+            logger.info('-'*30)
+            #logger.info(all_vacancy_ids)
+            all_data= _get_all_vacancy_details(session, all_vacancy_ids, search_config, hhconfig, show_progress)
+            #logger.info(all_data)
+            return all_data
 
 
 
-def _get_all_vacancy_ids(session, search_config: SearchParams, hhconfig: HHConfig):
+def _get_all_vacancy_ids(session, search_config, hhconfig: HHConfig):
 
     all_vacancy_ids=[]
     logger.info("Fetching vacancy pages info")
-    params = {
-        'text': search_config.vacancy,
-        'period': search_config.period,
-        'area': search_config.area_id,
-        'per_page': hhconfig.per_page,
-        'page': 0
-    }
+    if search_config is SearchParams_dateTodate:
+        params = {
+            'text': search_config.vacancy,
+            'date_from': search_config.start_date,
+            'date_to': search_config.end_date,
+            'area': search_config.area_id,
+            'per_page': hhconfig.per_page,
+            'page': 0
+        }
+    if search_config is SearchParams_period:
+        params = {
+            'text': search_config.vacancy,
+            'period': search_config.period,
+            'area': search_config.area_id,
+            'per_page': hhconfig.per_page,
+            'page': 0
+        }
     data = _request(session, search_config.base_url, params, hhconfig.timeout)
     total_found = data.get('found', 0)
     pages_available = data.get('pages', 0)
@@ -81,13 +102,23 @@ def _get_all_vacancy_ids(session, search_config: SearchParams, hhconfig: HHConfi
     seen = set()
     for i in range(pages_available):
         logger.info("page %s", i)
-        params = {
-            'text': search_config.vacancy,
-            'period': search_config.period,
-            'area': search_config.area_id,
-            'per_page': hhconfig.per_page,
-            'page': i
-        }
+        if search_config is SearchParams_dateTodate:
+            params = {
+                'text': search_config.vacancy,
+                'date_from': search_config.start_date,
+                'date_to': search_config.end_date,
+                'area': search_config.area_id,
+                'per_page': hhconfig.per_page,
+                'page': 0
+            }
+        if search_config is SearchParams_period:
+            params = {
+                'text': search_config.vacancy,
+                'period': search_config.period,
+                'area': search_config.area_id,
+                'per_page': hhconfig.per_page,
+                'page': 0
+            }
         data = _request(session, search_config.base_url, params, hhconfig.timeout)
         vacancy_ids = [item['id'] for item in data.get('items', []) if 'id' in item]
         logger.debug("Fetched IDs: %s", vacancy_ids)
