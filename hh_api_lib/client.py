@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import Any, Dict
 import math
 import logging
-from .config import HHConfig, SearchParams
+from .config import HHConfig, SearchParams_period, SearchParams_dateTodate
 from .exceptions import HHCaptchaRequired
 
 
