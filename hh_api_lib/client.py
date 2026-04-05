@@ -39,7 +39,7 @@ class HHCaptchaRequired(Exception):
         self.captcha_url = captcha_url
         super().__init__(f"Captcha required. Solve here: {captcha_url}")
 
-def external_request(search_config: SearchParams, show_progress: bool = False):
+def external_request(search_config: SearchParams, show_progress: bool = False, get_total_found: bool = False):
         count = 0
         results = []
         hhconfig = HHConfig()
@@ -60,7 +60,10 @@ def external_request(search_config: SearchParams, show_progress: bool = False):
             #logger.info(all_vacancy_ids)
             all_data= _get_all_vacancy_details(session, all_vacancy_ids, search_config, hhconfig, show_progress)
             #logger.info(all_data)
-            return all_data, total_found
+            if total_found:
+                return all_data, total_found
+            else:
+                return all_data
 
 
 
