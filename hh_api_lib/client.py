@@ -55,12 +55,12 @@ def external_request(search_config: SearchParams, show_progress: bool = False):
 
             logger.info("--- Этап 1: Сбор ID вакансий ---")
             logger.info("Поиск по вакансии: %s", search_config.vacancy)
-            all_vacancy_ids = _get_all_vacancy_ids(session, search_config, hhconfig)
+            all_vacancy_ids, total_found = _get_all_vacancy_ids(session, search_config, hhconfig)
             logger.info('-'*30)
             #logger.info(all_vacancy_ids)
             all_data= _get_all_vacancy_details(session, all_vacancy_ids, search_config, hhconfig, show_progress)
             #logger.info(all_data)
-            return all_data
+            return all_data, total_found
 
 
 
@@ -121,7 +121,7 @@ def _get_all_vacancy_ids(session, search_config: SearchParams, hhconfig: HHConfi
             if item not in seen:
                 seen.add(item)
                 all_vacancy_ids.append(item)
-    return all_vacancy_ids
+    return all_vacancy_ids, total_found
 
 def _get_all_vacancy_details(session, all_vacancy_ids, search_config: SearchParams, hhconfig: HHConfig, show_progress: bool = False,):
     all_data = []
