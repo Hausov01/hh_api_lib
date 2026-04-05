@@ -119,8 +119,8 @@ def _get_all_vacancy_ids(session, search_config: SearchParams, hhconfig: HHConfi
         vacancy_ids = [item['id'] for item in data.get('items', []) if 'id' in item]
         logger.debug("Fetched IDs: %s", vacancy_ids)
         for item in vacancy_ids:
-            if len(all_vacancy_ids) >= hhconfig.max_vacancies:
-                return all_vacancy_ids
+            #if len(all_vacancy_ids) >= hhconfig.max_vacancies:
+            #    return all_vacancy_ids
             if item not in seen:
                 seen.add(item)
                 all_vacancy_ids.append(item)
