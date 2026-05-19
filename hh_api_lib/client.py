@@ -196,7 +196,8 @@ def _normalize_to_dates(search_config):
         end = datetime.now()
         start = end - timedelta(days=search_config.period)
 
-        return start.isoformat(), end.isoformat()
+        #return start.isoformat(), end.isoformat()
+        return start.strftime("%d.%m.%Y"), end.strftime("%d.%m.%Y")
 
     raise ValueError("Provide either period or start_date + end_date")
 
